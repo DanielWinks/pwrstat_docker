@@ -1,0 +1,30 @@
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_HOST: tcp://docker:2375
+  CONTAINER_IMAGE: registry.gitlab.com/$CI_PROJECT_PATH
+  
+services:
+- docker:dind
+
+stages:
+  - build
+  #- test
+  
+before_script:
+
+build:
+  stage: build
+  script:
+    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
+    - docker build --cache-from $CONTAINER_IMAGE:latest --tag $CONTAINER_IMAGE:latest .
+    - docker push $CONTAINER_IMAGE:latest
+  only:
+    changes:
+      - dockerfile
+      - Dockerfile
+    
+#test:
+#  stage: test
+#  image: 
+#  script:
+    
