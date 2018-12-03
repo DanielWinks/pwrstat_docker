@@ -1,5 +1,5 @@
 FROM python:3-stretch
-LABEL Description="Eclipse Mosquitto MQTT Broker"
+LABEL Description="CyberPower PowerPanel"
 LABEL Maintainer="Daniel Winks"
 
 COPY pwrstat-api.py requirements.txt powerpanel_*_amd64.deb init.sh /
