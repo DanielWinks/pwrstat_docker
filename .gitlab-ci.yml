@@ -8,19 +8,17 @@ services:
 
 stages:
   - build
-  #- test
   
 before_script:
 
 build:
   stage: build
+  image: docker:stable
+  services:
+    - docker:dind
   script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
     - docker build --cache-from $CONTAINER_IMAGE:latest --tag $CONTAINER_IMAGE:latest .
     - docker push $CONTAINER_IMAGE:latest
-    
-#test:
-#  stage: test
-#  image: 
-#  script:
+
     
