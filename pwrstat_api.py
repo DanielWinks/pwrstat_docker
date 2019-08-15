@@ -4,6 +4,8 @@ from typing import Dict
 import json
 import subprocess
 import schedule
+import time
+import threading
 
 import voluptuous as vol
 import paho.mqtt.client as mqtt
@@ -56,6 +58,14 @@ class PwrstatMqtt:
         mqtt_port = self.mqtt_config["port"]
         self.client.connect_async(host=mqtt_host, port=mqtt_port)
         schedule.every(self.mqtt_config["refresh"]).seconds.do(self.publish_update)
+
+        threading.Thread(target=self.run_jobs, daemon=True)
+
+    def run_jobs(self):
+        """Run jobs on separate thread."""
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
 
     def publish_update(self):
         """Update MQTT topic with latest status."""
