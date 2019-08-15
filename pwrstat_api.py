@@ -55,7 +55,6 @@ class PwrstatMqtt:
         mqtt_host = self.mqtt_config["broker"]
         mqtt_port = self.mqtt_config["port"]
         self.client.connect_async(host=mqtt_host, port=mqtt_port)
-        self.client.conn
         schedule.every(self.mqtt_config["refresh"]).seconds.do(self.publish_update)
 
     def publish_update(self):
