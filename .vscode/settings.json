@@ -1,0 +1,8 @@
+{
+    "emeraldwalk.runonsave": {
+        "commands": [{
+            "match": "\\.py$",
+            "cmd": "black --line-length=110 ${file}"
+        }]
+    }
+}

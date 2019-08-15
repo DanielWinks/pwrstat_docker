@@ -1,0 +1,9 @@
+---
+mqtt:
+  topic: "sensors/basement/power/ups"
+  refresh: 30
+  qos: 0
+  retained: true
+rest:
+  http_port: 5002
+  http_bind_address: "0.0.0.0"
