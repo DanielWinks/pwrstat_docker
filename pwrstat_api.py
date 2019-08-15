@@ -56,10 +56,12 @@ class PwrstatMqtt:
         )
         mqtt_host = self.mqtt_config["broker"]
         mqtt_port = self.mqtt_config["port"]
-        self.client.connect_async(host=mqtt_host, port=mqtt_port)
+        print(mqtt_host)
+        print(mqtt_port)
+        self.client.connect(host=mqtt_host, port=mqtt_port)
         schedule.every(self.mqtt_config["refresh"]).seconds.do(self.publish_update)
 
-        threading.Thread(target=self.run_jobs, daemon=True)
+        threading.Thread(target=self.run_jobs, daemon=True).start()
 
     def run_jobs(self):
         """Run jobs on separate thread."""
@@ -137,7 +139,8 @@ def get_status() -> Dict[str, str]:
         Dict[str, str] -- Dictionary containing status from pwrstat.
 
     """
-    status = subprocess.Popen(["pwrstat", "-status"], stdout=subprocess.PIPE).communicate()[0].decode("utf-8")
+#     status = subprocess.Popen(["pwrstat", "-status"], stdout=subprocess.PIPE).communicate()[0].decode("utf-8")
+    status = subprocess.Popen(["cat", "test.txt"], stdout=subprocess.PIPE).communicate()[0].decode("utf-8")
     status_list = []
     for line in status.splitlines():
         line = line.lstrip()

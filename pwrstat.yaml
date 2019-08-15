@@ -3,7 +3,7 @@ mqtt:
   broker: "192.168.1.100"
   port: 1883
   topic: "sensors/basement/power/ups"
-  refresh: 30
+  refresh: 3
   qos: 0
   retained: true
 rest:
