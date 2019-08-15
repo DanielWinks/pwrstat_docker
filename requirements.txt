@@ -5,3 +5,4 @@ flask-jsonpify
 paho-mqtt
 ruamel.yaml
 schedule
+voluptuous
