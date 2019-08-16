@@ -68,7 +68,6 @@ class PwrstatMqtt:
     def publish_update(self):
         """Update MQTT topic with latest status."""
         status = get_status()
-        print(status)
         json_payload = json.dumps(status)
         self.client.publish(
             self.mqtt_config["topic"],
