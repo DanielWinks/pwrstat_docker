@@ -87,7 +87,7 @@ class Pwrstat:
                 print(ex)
 
         self.mqtt_config = yaml_config["mqtt"] if "mqtt" in yaml_config else None
-        self.rest_config = yaml_config.get["rest"] if "rest" in yaml_config else None
+        self.rest_config = yaml_config["rest"] if "rest" in yaml_config else None
 
         mqtt_schema = vol.Schema(
             {
