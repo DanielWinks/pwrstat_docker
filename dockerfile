@@ -2,10 +2,10 @@ FROM python:3-stretch
 LABEL Description="CyberPower PowerPanel"
 LABEL Maintainer="Daniel Winks"
 
-COPY pwrstat-api.py requirements.txt powerpanel_*_amd64.deb init.sh /
+COPY pwrstat_api.py requirements.txt powerpanel_*_amd64.deb init.sh /
 
 RUN apt update && apt dist-upgrade -y && rm -rf /var/lib/apt/lists/* && \
-    chmod +x /init.sh && chmod +x /pwrstat-api.py && \
+    chmod +x /init.sh && chmod +x /pwrstat_api.py && \
     pip install --trusted-host pypi.python.org -r requirements.txt && \
     dpkg -i powerpanel_*_amd64.deb
 
