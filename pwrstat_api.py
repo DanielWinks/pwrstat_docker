@@ -57,7 +57,13 @@ class PwrstatMqtt:
         mqtt_port = self.mqtt_config["port"]
         self.client.connect(host=mqtt_host, port=mqtt_port)
         schedule.every(self.mqtt_config["refresh"]).seconds.do(self.publish_update)
-        threading.Thread(target=run_jobs, daemon=True).start()
+        threading.Thread(target=self.run_jobs, daemon=True).start()
+
+    def run_jobs(self):
+        """Run jobs on separate thread."""
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
 
     def publish_update(self):
         """Update MQTT topic with latest status."""
@@ -136,13 +142,6 @@ def get_status() -> Dict[str, str]:
         if len(line) > 1:
             status_list.append(line)
     return {k[0]: k[1] for k in status_list}
-
-
-def run_jobs():
-    """Run jobs on separate thread."""
-    while True:
-        schedule.run_pending()
-        time.sleep(100)
 
 
 if __name__ == "__main__":
