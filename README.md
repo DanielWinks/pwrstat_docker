@@ -15,14 +15,14 @@ This is a container for the CyberPower 'pwrstat' utility. Basic GET support for 
             restart: always
             image: dwinks/pwrstat_docker:latest
             devices:
-            - /dev/bus/usb/003/003:/dev/bus/usb/001/001
+                - /dev/bus/usb/003/003:/dev/bus/usb/001/001
             volumes:
-            - /docker_binds/pwr_stat/pwrstat.yaml:/pwrstat.yaml:ro
+                - /docker_binds/pwr_stat/pwrstat.yaml:/pwrstat.yaml:ro
             healthcheck:
-            test: ["CMD", "curl", "-sI", "http://127.0.0.1:5002/pwrstat"]
-            interval: 30s
-            timeout: 1s
-            retries: 24
+                test: ["CMD", "curl", "-sI", "http://127.0.0.1:5002/pwrstat"]
+                interval: 30s
+                timeout: 1s
+                retries: 24
             privileged: true
             network_mode: host
 
