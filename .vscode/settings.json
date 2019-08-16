@@ -14,5 +14,5 @@
     "python.linting.pep8Enabled": true,
     "git.postCommitCommand": "sync",
     "python.formatting.provider": "black",
-    "python.jediEnabled": true
+    "python.jediEnabled": false
 }

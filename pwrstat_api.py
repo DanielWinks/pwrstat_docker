@@ -3,10 +3,9 @@
 from typing import Dict
 import json
 import subprocess
-import schedule
 import time
 import threading
-
+import schedule
 import voluptuous as vol
 import paho.mqtt.client as mqtt
 
@@ -56,31 +55,21 @@ class PwrstatMqtt:
         )
         mqtt_host = self.mqtt_config["broker"]
         mqtt_port = self.mqtt_config["port"]
-        print(mqtt_host)
-        print(mqtt_port)
         self.client.connect(host=mqtt_host, port=mqtt_port)
         schedule.every(self.mqtt_config["refresh"]).seconds.do(self.publish_update)
-
-        threading.Thread(target=self.run_jobs, daemon=True).start()
-
-    def run_jobs(self):
-        """Run jobs on separate thread."""
-        while True:
-            schedule.run_pending()
-            time.sleep(1)
+        threading.Thread(target=run_jobs, daemon=True).start()
 
     def publish_update(self):
         """Update MQTT topic with latest status."""
         status = get_status()
         print(status)
         json_payload = json.dumps(status)
-        rc = self.client.publish(
+        self.client.publish(
             self.mqtt_config["topic"],
             json_payload,
             qos=self.mqtt_config["qos"],
             retain=self.mqtt_config["retained"],
         )
-        print(rc.is_published())
 
 
 class Pwrstat:
@@ -96,10 +85,9 @@ class Pwrstat:
                 yaml_config = YAML.load(file)
             except YAMLError as ex:
                 print(ex)
-            if "mqtt" in yaml_config:
-                self.mqtt_config = yaml_config.get("mqtt")
-            if "rest" in yaml_config:
-                self.rest_config = yaml_config.get("rest")
+
+        self.mqtt_config = yaml_config["mqtt"] if "mqtt" in yaml_config else None
+        self.rest_config = yaml_config.get["rest"] if "rest" in yaml_config else None
 
         mqtt_schema = vol.Schema(
             {
@@ -122,7 +110,6 @@ class Pwrstat:
         )
 
         if self.mqtt_config is not None:
-            print(self.mqtt_config)
             mqtt_schema(self.mqtt_config)
             PwrstatMqtt(mqtt_config=self.mqtt_config)
 
@@ -139,8 +126,7 @@ def get_status() -> Dict[str, str]:
         Dict[str, str] -- Dictionary containing status from pwrstat.
 
     """
-#     status = subprocess.Popen(["pwrstat", "-status"], stdout=subprocess.PIPE).communicate()[0].decode("utf-8")
-    status = subprocess.Popen(["cat", "test.txt"], stdout=subprocess.PIPE).communicate()[0].decode("utf-8")
+    status = subprocess.Popen(["pwrstat", "-status"], stdout=subprocess.PIPE).communicate()[0].decode("utf-8")
     status_list = []
     for line in status.splitlines():
         line = line.lstrip()
@@ -150,6 +136,13 @@ def get_status() -> Dict[str, str]:
         if len(line) > 1:
             status_list.append(line)
     return {k[0]: k[1] for k in status_list}
+
+
+def run_jobs():
+    """Run jobs on separate thread."""
+    while True:
+        schedule.run_pending()
+        time.sleep(100)
 
 
 if __name__ == "__main__":
