@@ -19,4 +19,5 @@ build:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
     - docker push $CONTAINER_IMAGE:latest
     - docker login -u $CI_REGISTRY_USER -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - docker tag $CONTAINER_IMAGE:latest $REGISTRY_CONTAINER_IMAGE:latest
     - docker push $REGISTRY_CONTAINER_IMAGE:latest
