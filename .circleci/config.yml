@@ -1,0 +1,108 @@
+---
+version: 2.1
+executors:
+  python_executor:
+    docker:
+      - image: circleci/python:3.7.4
+  yaml_executor:
+    docker:
+      - image: sdesbure/yamllint
+  md_executor:
+    docker:
+      - image: ruby:alpine
+  json_executor:
+    docker:
+      - image: sahsu/docker-jsonlint
+
+jobs:
+  lint_python:
+    executor: python_executor
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "requirements.txt" }}
+            - v1-dependencies-
+      - run:
+          name: install dependencies
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r requirements.txt
+      - save_cache:
+          paths:
+            - ./venv
+          key: v1-dependencies-{{ checksum "requirements.txt" }}
+      - run:
+          name: black
+          command: |
+            . venv/bin/activate
+            for file in $(find ~/repo/config -type f -name "*.py"); do
+              black $file
+            done
+      - run:
+          name: flake8
+          command: |
+            . venv/bin/activate
+            for file in $(find ~/repo/config -type f -name "*.py"); do
+              flake8 $file
+            done
+      - run:
+          name: pylint
+          command: |
+            . venv/bin/activate
+            for file in $(find ~/repo/config -type f -name "*.py"); do
+              pylint --rcfile=pylintrc $file
+            done
+  lint_yaml:
+    executor: yaml_executor
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - run:
+          name: yamllint
+          command: |
+            yamllint --version
+            for file in $(find ~/repo -type f \( -name "*.yaml" -o -name "*.yml" \)); do
+              yamllint $file
+            done
+  lint_md:
+    executor: md_executor
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - run:
+          name: md_lint
+          command: |
+            gem install mdl
+            mdl --version
+            mdl --style all --warnings ~/repo
+  lint_json:
+    executor: json_executor
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - run:
+          name: json_lint
+          command: |
+            jsonlint --version || true
+            for file in $(find ~/repo -type f -name "*.json"); do
+              if ! jsonlint -q $file; then
+                export FAILED=1
+              else
+                echo "$file OK"
+              fi
+            done
+            if [ "${FAILED}" = "1" ]; then
+              exit 1
+            fi
+
+workflows:
+  version: 2
+  lint_and_test:
+    jobs:
+      - lint_python
+      - lint_yaml
+      - lint_md
+      - lint_json
