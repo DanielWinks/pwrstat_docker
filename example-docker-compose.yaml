@@ -1,5 +1,5 @@
 ---
-version: '2.4'
+version: "2.4"
 services:
   pwr_stat:
     container_name: pwr_stat
@@ -7,9 +7,9 @@ services:
     restart: always
     image: dwinks/pwrstat_docker:latest
     devices:
-    - /dev/bus/usb/003/003:/dev/bus/usb/001/001
+      - /dev/bus/usb/003/003:/dev/bus/usb/001/001
     volumes:
-    - /docker_binds/pwr_stat/pwrstat.yaml:/pwrstat.yaml:ro
+      - /docker_binds/pwr_stat/pwrstat.yaml:/pwrstat.yaml:ro
     healthcheck:
     test: ["CMD", "curl", "-sI", "http://127.0.0.1:5002/pwrstat"]
     interval: 30s
