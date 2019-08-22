@@ -1,11 +1,16 @@
 # PowerPanel (pwrstat) API & MQTT container
 
-This is a container for the CyberPower 'pwrstat' utility. Basic GET support for a single JSON object response for all parameters of the UPS are implemented. MQTT is also supported, with broker, port, and topic options all being specified in the config file.
+This is a container for the CyberPower 'pwrstat' utility.
+Basic GET support for a single JSON object response for
+all parameters of the UPS are implemented.
+MQTT is also supported, with broker, port, and topic
+options all being specified in the config file.
 
-# Usage
+## Usage
 
-## Example docker-compose:
+### Example docker-compose
 
+```yaml
     ---
     version: '2.4'
     services:
@@ -26,8 +31,11 @@ This is a container for the CyberPower 'pwrstat' utility. Basic GET support for 
             privileged: true
             network_mode: host
 
-## Example config file:
+```
 
+### Example config file
+
+```yaml
     ---
     mqtt:
         broker: "192.168.1.100"
@@ -39,3 +47,4 @@ This is a container for the CyberPower 'pwrstat' utility. Basic GET support for 
     rest:
         port: 5003
         bind_address: "0.0.0.0"
+```
