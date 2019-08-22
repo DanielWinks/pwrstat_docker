@@ -77,7 +77,7 @@ jobs:
           command: |
             gem install mdl
             mdl --version
-            mdl ~/repo -c .mdlrc
+            mdl --style all --warnings ~/repo -c .mdlrc
   lint_json:
     executor: json_executor
     working_directory: ~/repo
