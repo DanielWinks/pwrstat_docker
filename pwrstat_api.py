@@ -47,7 +47,7 @@ class PwrstatMqtt:
         """
         self.mqtt_config = kwargs["mqtt_config"]
         self.client = mqtt.Client(
-            client_id="pwrstat_mqtt",
+            client_id=self.mqtt_config["client_id"],
             clean_session=True,
             userdata=None,
             protocol=mqtt.MQTTv311,
@@ -98,6 +98,7 @@ class Pwrstat:
             {
                 vol.Required("broker"): vol.All(str, vol.Length(min=7, max=15), vol.Match(VALID_IP_REGEX)),
                 vol.Required("port"): int,
+                vol.Required("client_id"): str,
                 vol.Required("topic"): str,
                 vol.Required("refresh"): int,
                 vol.Required("qos"): int,
