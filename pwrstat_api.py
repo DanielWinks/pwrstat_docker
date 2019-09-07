@@ -98,6 +98,7 @@ class Pwrstat:
             {
                 vol.Required("broker"): vol.All(str, vol.Length(min=7, max=15), vol.Match(VALID_IP_REGEX)),
                 vol.Required("port"): int,
+                vol.Required("client_id"): str,
                 vol.Required("topic"): str,
                 vol.Required("refresh"): int,
                 vol.Required("qos"): int,
