@@ -24,6 +24,7 @@ must be unique.
                 - /dev/bus/usb/003/003:/dev/bus/usb/001/001
             volumes:
                 - /docker_binds/pwr_stat/pwrstat.yaml:/pwrstat.yaml:ro
+                # Optionally override the powerstatd configuration file
                 - /docker_binds/pwr_stat/pwrstatd.conf:/etc/pwrstatd.conf:ro
             healthcheck:
                 test: ["CMD", "curl", "-sI", "http://127.0.0.1:5002/pwrstat"]
