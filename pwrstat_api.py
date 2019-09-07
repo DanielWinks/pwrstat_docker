@@ -47,7 +47,7 @@ class PwrstatMqtt:
         """
         self.mqtt_config = kwargs["mqtt_config"]
         self.client = mqtt.Client(
-            client_id="pwrstat_mqtt",
+            client_id=self.mqtt_config["client_id"],
             clean_session=True,
             userdata=None,
             protocol=mqtt.MQTTv311,
