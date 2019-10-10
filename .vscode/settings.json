@@ -11,7 +11,7 @@
     "python.autoComplete.addBrackets": true,
     "python.linting.mypyEnabled": true,
     "python.linting.pydocstyleEnabled": true,
-    "python.linting.pep8Enabled": true,
+    "python.linting.pycodestyleEnabled": true,
     "git.postCommitCommand": "sync",
     "python.formatting.provider": "black",
     "python.jediEnabled": false

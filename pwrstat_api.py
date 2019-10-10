@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Get output from pwrstat program and send results to REST or MQTT clients."""
-from typing import Dict
+from typing import Any, Dict, List, Optional
 import json
 import subprocess
 import time
@@ -45,36 +45,36 @@ class PwrstatMqtt:
 
         Returns: None
         """
-        self.mqtt_config = kwargs["mqtt_config"]
+        self.mqtt_config: Dict[str, Any] = kwargs["mqtt_config"]
+        client_id: str = self.mqtt_config["client_id"]
         self.client = mqtt.Client(
-            client_id=self.mqtt_config["client_id"],
-            clean_session=True,
-            userdata=None,
-            protocol=mqtt.MQTTv311,
-            transport="tcp",
+            client_id=client_id, clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp"
         )
-        mqtt_host = self.mqtt_config["broker"]
-        mqtt_port = self.mqtt_config["port"]
+        mqtt_host: str = self.mqtt_config["broker"]
+        mqtt_port: int = self.mqtt_config["port"]
         self.client.connect(host=mqtt_host, port=mqtt_port)
-        schedule.every(self.mqtt_config["refresh"]).seconds.do(self.publish_update)
+
+        refresh_interval: int = self.mqtt_config["refresh"]
+        schedule.every(refresh_interval).seconds.do(self.publish_update)
         threading.Thread(target=self.run_jobs, daemon=True).start()
 
-    def run_jobs(self):
+    # pylint: disable=R0201
+    def run_jobs(self) -> None:
         """Run jobs on separate thread."""
         while True:
             schedule.run_pending()
             time.sleep(1)
 
-    def publish_update(self):
+    # pylint: enable=R0201
+
+    def publish_update(self) -> None:
         """Update MQTT topic with latest status."""
+        topic = self.mqtt_config["topic"]
         status = get_status()
         json_payload = json.dumps(status)
-        self.client.publish(
-            self.mqtt_config["topic"],
-            json_payload,
-            qos=self.mqtt_config["qos"],
-            retain=self.mqtt_config["retained"],
-        )
+        qos: int = self.mqtt_config["qos"]
+        retain: bool = self.mqtt_config["retained"]
+        self.client.publish(topic, json_payload, qos=qos, retain=retain)
 
 
 class Pwrstat:
@@ -91,8 +91,8 @@ class Pwrstat:
             except YAMLError as ex:
                 print(ex)
 
-        self.mqtt_config = yaml_config["mqtt"] if "mqtt" in yaml_config else None
-        self.rest_config = yaml_config["rest"] if "rest" in yaml_config else None
+        self.mqtt_config: Optional[Dict[str, Any]] = yaml_config["mqtt"] if "mqtt" in yaml_config else None
+        self.rest_config: Optional[Dict[str, Any]] = yaml_config["rest"] if "rest" in yaml_config else None
 
         mqtt_schema = vol.Schema(
             {
@@ -132,15 +132,17 @@ def get_status() -> Dict[str, str]:
         Dict[str, str] -- Dictionary containing status from pwrstat.
 
     """
-    status = subprocess.Popen(["pwrstat", "-status"], stdout=subprocess.PIPE).communicate()[0].decode("utf-8")
-    status_list = []
+    status: str = subprocess.Popen(["pwrstat", "-status"], stdout=subprocess.PIPE).communicate()[0].decode(
+        "utf-8"
+    )
+    status_list: List[List[str]] = []
     for line in status.splitlines():
         line = line.lstrip()
         line = line.replace(". ", ";")
         line = line.replace(".", "")
-        line = line.split(";")
-        if len(line) > 1:
-            status_list.append(line)
+        lines: List[str] = line.split(";")
+        if len(lines) > 1:
+            status_list.append(lines)
     return {k[0]: k[1] for k in status_list}
 
 
