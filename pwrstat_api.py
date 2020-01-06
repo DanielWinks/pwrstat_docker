@@ -48,8 +48,18 @@ class PwrstatMqtt:
         self.mqtt_config: Dict[str, Any] = kwargs["mqtt_config"]
         client_id: str = self.mqtt_config["client_id"]
         self.client = mqtt.Client(
-            client_id=client_id, clean_session=True, userdata=None, protocol=mqtt.MQTTv311, transport="tcp"
+            client_id=client_id,
+            clean_session=True,
+            userdata=None,
+            protocol=mqtt.MQTTv311,
+            transport="tcp",
         )
+
+        username = self.mqtt_config.get("username")
+        password = self.mqtt_config.get("password")
+        if None not in (username, password):
+            self.client.username_pw_set(username=username, password=password)
+
         mqtt_host: str = self.mqtt_config["broker"]
         mqtt_port: int = self.mqtt_config["port"]
         self.client.connect(host=mqtt_host, port=mqtt_port)
@@ -91,18 +101,26 @@ class Pwrstat:
             except YAMLError as ex:
                 print(ex)
 
-        self.mqtt_config: Optional[Dict[str, Any]] = yaml_config["mqtt"] if "mqtt" in yaml_config else None
-        self.rest_config: Optional[Dict[str, Any]] = yaml_config["rest"] if "rest" in yaml_config else None
+        self.mqtt_config: Optional[Dict[str, Any]] = yaml_config[
+            "mqtt"
+        ] if "mqtt" in yaml_config else None
+        self.rest_config: Optional[Dict[str, Any]] = yaml_config[
+            "rest"
+        ] if "rest" in yaml_config else None
 
         mqtt_schema = vol.Schema(
             {
-                vol.Required("broker"): vol.All(str, vol.Length(min=7, max=15), vol.Match(VALID_IP_REGEX)),
+                vol.Required("broker"): vol.All(
+                    str, vol.Length(min=7, max=15), vol.Match(VALID_IP_REGEX)
+                ),
                 vol.Required("port"): int,
                 vol.Required("client_id"): str,
                 vol.Required("topic"): str,
                 vol.Required("refresh"): int,
                 vol.Required("qos"): int,
                 vol.Required("retained"): bool,
+                vol.Optional("username"): str,
+                vol.Optional("password"): str,
             }
         )
 
@@ -122,7 +140,9 @@ class Pwrstat:
         if self.rest_config is not None:
             rest_schema(self.rest_config)
             API.add_resource(PwrstatRest, "/pwrstat")
-            APP.run(port=self.rest_config["port"], host=self.rest_config["bind_address"])
+            APP.run(
+                port=self.rest_config["port"], host=self.rest_config["bind_address"]
+            )
 
 
 def get_status() -> Dict[str, str]:
@@ -132,9 +152,9 @@ def get_status() -> Dict[str, str]:
         Dict[str, str] -- Dictionary containing status from pwrstat.
 
     """
-    status: str = subprocess.Popen(["pwrstat", "-status"], stdout=subprocess.PIPE).communicate()[0].decode(
-        "utf-8"
-    )
+    status: str = subprocess.Popen(
+        ["pwrstat", "-status"], stdout=subprocess.PIPE
+    ).communicate()[0].decode("utf-8")
     status_list: List[List[str]] = []
     for line in status.splitlines():
         line = line.lstrip()

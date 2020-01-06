@@ -7,6 +7,8 @@ mqtt:
   refresh: 30
   qos: 0
   retained: true
+  # username: "my_username" # optional
+  # password: "my_password" # optional, required if username specified
 rest:
   port: 5003
   bind_address: "0.0.0.0"
