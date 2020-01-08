@@ -5,7 +5,7 @@ LABEL Maintainer="Daniel Winks"
 COPY pwrstat_api.py requirements.txt powerpanel_*_amd64.deb init.sh pwrstat.yaml /
 
 RUN apt-get update && apt-get dist-upgrade -y && \
-    apt-get install procps supervisor && \
+    apt-get install -y procps supervisor && \
     chmod +x /init.sh && chmod +x /pwrstat_api.py && \
     pip install --trusted-host pypi.python.org -r requirements.txt && \
     dpkg -i powerpanel_*_amd64.deb && \
