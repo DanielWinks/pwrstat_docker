@@ -110,9 +110,7 @@ class Pwrstat:
 
         mqtt_schema = vol.Schema(
             {
-                vol.Required("broker"): vol.All(
-                    str, vol.Length(min=7, max=15), vol.Match(VALID_IP_REGEX)
-                ),
+                vol.Required("broker"): str,
                 vol.Required("port"): int,
                 vol.Required("client_id"): str,
                 vol.Required("topic"): str,
