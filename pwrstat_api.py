@@ -50,10 +50,13 @@ class PwrstatMqtt:
         mqtt_host: str = self.mqtt_config["broker"]
         mqtt_port: int = self.mqtt_config["port"]
         self.client.connect(host=mqtt_host, port=mqtt_port)
-
         self.refresh_interval: int = self.mqtt_config["refresh"]
 
-    async def run(self) -> None:
+    def run(self) -> None:
+        """Run async loop."""
+        self.loop()
+
+    async def loop(self) -> None:
         """Loop for MQTT updates."""
         while True:
             await self.publish_update()
