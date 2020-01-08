@@ -1,21 +1,18 @@
 #!/usr/bin/env python3
 """Get output from pwrstat program and send results to REST or MQTT clients."""
-from typing import Any, Dict, List, Optional
 import json
-import subprocess
-import time
-import threading
-import schedule
-import voluptuous as vol
-import paho.mqtt.client as mqtt
+from subprocess import Popen, PIPE
+from asyncio import sleep as async_sleep
+from typing import Any, Dict, List, Optional
 
-from flask import Flask
+import paho.mqtt.client as mqtt
+import voluptuous as vol
+from flask import Flask, Response
 from flask_jsonpify import jsonify
-from flask_restful import Api, Resource
-from ruamel.yaml import YAML as yaml, YAMLError
+from ruamel.yaml import YAML as yaml
+from ruamel.yaml import YAMLError
 
 APP = Flask(__name__)
-API = Api(APP)
 YAML = yaml(typ="safe")
 
 VALID_IP_REGEX = (
@@ -24,27 +21,17 @@ VALID_IP_REGEX = (
 )
 
 
-class PwrstatRest(Resource):
-    """Create REST resource."""
-
-    def get(self):
-        """Responder for get requests.
-
-        Returns:
-            flask.Response -- Flask response with pwrstat info.
-
-        """
-        return jsonify(get_status())
+@APP.route("/pwrstat")
+def pwrstat() -> Response:
+    """Responder for get requests."""
+    return jsonify(get_status())
 
 
 class PwrstatMqtt:
     """Create MQTT publisher."""
 
     def __init__(self, *args, **kwargs) -> None:
-        """Start MQTT loop.
-
-        Returns: None
-        """
+        """Start MQTT loop."""
         self.mqtt_config: Dict[str, Any] = kwargs["mqtt_config"]
         client_id: str = self.mqtt_config["client_id"]
         self.client = mqtt.Client(
@@ -64,27 +51,23 @@ class PwrstatMqtt:
         mqtt_port: int = self.mqtt_config["port"]
         self.client.connect(host=mqtt_host, port=mqtt_port)
 
-        refresh_interval: int = self.mqtt_config["refresh"]
-        schedule.every(refresh_interval).seconds.do(self.publish_update)
-        threading.Thread(target=self.run_jobs, daemon=True).start()
+        self.refresh_interval: int = self.mqtt_config["refresh"]
 
-    # pylint: disable=R0201
-    def run_jobs(self) -> None:
-        """Run jobs on separate thread."""
+    async def mqtt_loop(self) -> None:
+        """Loop for MQTT updates."""
         while True:
-            schedule.run_pending()
-            time.sleep(1)
+            await self.publish_update()
+            await async_sleep(self.refresh_interval)
 
-    # pylint: enable=R0201
-
-    def publish_update(self) -> None:
+    async def publish_update(self) -> bool:
         """Update MQTT topic with latest status."""
         topic = self.mqtt_config["topic"]
         status = get_status()
         json_payload = json.dumps(status)
         qos: int = self.mqtt_config["qos"]
         retain: bool = self.mqtt_config["retained"]
-        self.client.publish(topic, json_payload, qos=qos, retain=retain)
+        result = self.client.publish(topic, json_payload, qos=qos, retain=retain)
+        return result.is_published()
 
 
 class Pwrstat:
@@ -137,22 +120,16 @@ class Pwrstat:
 
         if self.rest_config is not None:
             rest_schema(self.rest_config)
-            API.add_resource(PwrstatRest, "/pwrstat")
-            APP.run(
-                port=self.rest_config["port"], host=self.rest_config["bind_address"]
-            )
+            port = self.rest_config["port"]
+            host = self.rest_config["bind_address"]
+            APP.run(port=port, host=host)
 
 
 def get_status() -> Dict[str, str]:
-    """Return status from pwrstat program.
-
-    Returns:
-        Dict[str, str] -- Dictionary containing status from pwrstat.
-
-    """
-    status: str = subprocess.Popen(
-        ["pwrstat", "-status"], stdout=subprocess.PIPE
-    ).communicate()[0].decode("utf-8")
+    """Return status from pwrstat program."""
+    status: str = Popen(["pwrstat", "-status"], stdout=PIPE).communicate()[0].decode(
+        "utf-8"
+    )
     status_list: List[List[str]] = []
     for line in status.splitlines():
         line = line.lstrip()
