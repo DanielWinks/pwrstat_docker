@@ -53,7 +53,7 @@ class PwrstatMqtt:
 
         self.refresh_interval: int = self.mqtt_config["refresh"]
 
-    async def mqtt_loop(self) -> None:
+    async def run(self) -> None:
         """Loop for MQTT updates."""
         while True:
             await self.publish_update()
@@ -116,7 +116,8 @@ class Pwrstat:
 
         if self.mqtt_config is not None:
             mqtt_schema(self.mqtt_config)
-            PwrstatMqtt(mqtt_config=self.mqtt_config)
+            mqtt = PwrstatMqtt(mqtt_config=self.mqtt_config)
+            mqtt.run()
 
         if self.rest_config is not None:
             rest_schema(self.rest_config)
