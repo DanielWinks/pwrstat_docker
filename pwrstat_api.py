@@ -116,8 +116,8 @@ class Pwrstat:
 
         if self.mqtt_config is not None:
             mqtt_schema(self.mqtt_config)
-            mqtt = PwrstatMqtt(mqtt_config=self.mqtt_config)
-            mqtt.run()
+            pwrstatmqtt = PwrstatMqtt(mqtt_config=self.mqtt_config)
+            pwrstatmqtt.run()
 
         if self.rest_config is not None:
             rest_schema(self.rest_config)
