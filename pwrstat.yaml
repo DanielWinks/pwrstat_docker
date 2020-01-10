@@ -1,6 +1,6 @@
 ---
-pwrstat_api: # optional
-  log_level: "DEBUG" # optional
+pwrstat_api:  # optional
+  log_level: "DEBUG"  # optional
 mqtt:
   broker: "192.168.1.100"
   port: 1883
