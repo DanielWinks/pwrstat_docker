@@ -24,7 +24,11 @@ VALID_IP_REGEX = (
 @APP.route("/pwrstat", methods=["GET"])
 def pwrstat() -> Response:
     """Responder for get requests."""
-    return jsonify(get_status())
+    status = get_status()
+    if status is not None:
+        return jsonify(status)
+    data = {"message": "Unavailable: pwrstatd failure", "code": "ERROR"}
+    return make_response(jsonify(data), 503)
 
 
 @APP.route("/health", methods=["GET"])
@@ -73,8 +77,9 @@ class PwrstatMqtt:
         topic = self.mqtt_config["topic"]
         qos: int = self.mqtt_config["qos"]
         retain: bool = self.mqtt_config["retained"]
-        json_payload = json.dumps(get_status())
-        if json_payload is not None and len(json_payload) > 0:
+        status = get_status()
+        if status is not None:
+            json_payload = json.dumps(status)
             result = self.client.publish(topic, json_payload, qos=qos, retain=retain)
             return result.is_published()
         return False
@@ -135,7 +140,7 @@ class Pwrstat:
             APP.run(port=port, host=host)
 
 
-def get_status() -> Dict[str, str]:
+def get_status() -> Optional[Dict[str, str]]:
     """Return status from pwrstat program."""
     logging.log(level=logging.DEBUG, msg="Getting status from pwrstatd...")
     status: str = Popen(["pwrstat", "-status"], stdout=PIPE).communicate()[0].decode(
@@ -149,7 +154,15 @@ def get_status() -> Dict[str, str]:
         lines: List[str] = line.split(";")
         if len(lines) > 1:
             status_list.append(lines)
-    return {k[0]: k[1] for k in status_list}
+    if len(status_list) > 1:
+        return {k[0]: k[1] for k in status_list}
+    logging.log(level=logging.WARNING, msg="Pwrstatd did not return any data.")
+    logging.log(level=logging.WARNING, msg="Check USB connection and UPS.")
+    logging.log(
+        level=logging.WARNING,
+        msg="If USB device frequently changes name, consider creating a udev rule.",
+    )
+    return None
 
 
 if __name__ == "__main__":
