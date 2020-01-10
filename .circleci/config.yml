@@ -106,7 +106,7 @@ jobs:
       # build and push Docker image
       - run: |
           TAG=<< pipeline.git.branch >>_CI
-          echo ${TAG}
+          cd ~/repo
           docker build -t ${DOCKER_REPO}:${TAG} .
           echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin
           docker push ${DOCKER_REPO}:${TAG}
