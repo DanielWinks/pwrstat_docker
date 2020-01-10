@@ -3,7 +3,7 @@
 import asyncio
 import json
 import logging
-from subprocess import Popen, PIPE
+from subprocess import DEVNULL, Popen, PIPE
 from typing import Any, Dict, List, Optional
 
 import paho.mqtt.client as mqtt
@@ -13,6 +13,7 @@ from ruamel.yaml import YAML as yaml
 from ruamel.yaml import YAMLError
 
 APP = Flask(__name__)
+LOGGER = logging.getLogger(__name__)
 YAML = yaml(typ="safe")
 
 VALID_IP_REGEX = (
@@ -75,16 +76,16 @@ class PwrstatMqtt:
 
         mqtt_host: str = self.mqtt_config["broker"]
         mqtt_port: int = self.mqtt_config["port"]
-        logging.log(level=logging.INFO, msg="Connecting to MQTT broker...")
+        LOGGER.log(level=logging.INFO, msg="Connecting to MQTT broker...")
         self.client.connect(host=mqtt_host, port=mqtt_port)
         self.refresh_interval: int = self.mqtt_config["refresh"]
 
     async def loop(self) -> None:
         """Loop for MQTT updates."""
-        logging.log(level=logging.INFO, msg="Starting MQTT loop...")
+        LOGGER.log(level=logging.INFO, msg="Starting MQTT loop...")
         while True:
             await self.publish_update()
-            logging.log(level=logging.DEBUG, msg="Publishing message to MQTT broker...")
+            LOGGER.log(level=logging.DEBUG, msg="Publishing message to MQTT broker...")
             await asyncio.sleep(self.refresh_interval)
 
     async def publish_update(self) -> bool:
@@ -109,14 +110,26 @@ class Pwrstat:
             try:
                 yaml_config = YAML.load(file)
             except YAMLError as ex:
-                logging.log(level=logging.ERROR, msg=ex)
+                LOGGER.log(level=logging.ERROR, msg=ex)
+
+        pwrstat_api_yaml: Dict[str, Any] = yaml_config[
+            "pwrstat_api"
+        ] if "pwrstat_api" in yaml_config else {}
 
         self.mqtt_config: Optional[Dict[str, Any]] = yaml_config[
             "mqtt"
         ] if "mqtt" in yaml_config else None
+
         self.rest_config: Optional[Dict[str, Any]] = yaml_config[
             "rest"
         ] if "rest" in yaml_config else None
+
+        pwrstat_api_schema = vol.Schema(
+            {vol.Optional("log_level", default="WARNING"): str}
+        )
+        pwrstat_api_config: Dict[str, Any] = pwrstat_api_schema(pwrstat_api_yaml)
+        log_level = pwrstat_api_config["log_level"]
+        LOGGER.setLevel(log_level)
 
         mqtt_schema = vol.Schema(
             {
@@ -142,17 +155,17 @@ class Pwrstat:
         )
 
         if self.mqtt_config is not None:
-            logging.log(level=logging.INFO, msg="Initializing MQTT...")
+            LOGGER.log(level=logging.INFO, msg="Initializing MQTT...")
             mqtt_schema(self.mqtt_config)
             pwrstatmqtt = PwrstatMqtt(mqtt_config=self.mqtt_config)
             asyncio.run(pwrstatmqtt.loop())
 
         if self.rest_config is not None:
-            logging.log(level=logging.INFO, msg="Initializing REST...")
+            LOGGER.log(level=logging.INFO, msg="Initializing REST...")
             rest_schema(self.rest_config)
             port = self.rest_config["port"]
             host = self.rest_config["bind_address"]
-            logging.log(
+            LOGGER.log(
                 level=logging.INFO,
                 msg=f"Starting REST endpoint, listening on {host}:{port}...",
             )
@@ -161,10 +174,10 @@ class Pwrstat:
 
 def get_status() -> Optional[Dict[str, str]]:
     """Return status from pwrstat program."""
-    logging.log(level=logging.DEBUG, msg="Getting status from pwrstatd...")
-    status: str = Popen(["pwrstat", "-status"], stdout=PIPE).communicate()[0].decode(
-        "utf-8"
-    )
+    LOGGER.log(level=logging.DEBUG, msg="Getting status from pwrstatd...")
+    status: str = Popen(
+        ["pwrstat", "-status"], stdout=PIPE, stderr=DEVNULL
+    ).communicate()[0].decode("utf-8")
     status_list: List[List[str]] = []
     for line in status.splitlines():
         line = line.lstrip()
@@ -175,9 +188,9 @@ def get_status() -> Optional[Dict[str, str]]:
             status_list.append(lines)
     if len(status_list) > 1:
         return {k[0]: k[1] for k in status_list}
-    logging.log(level=logging.WARNING, msg="Pwrstatd did not return any data.")
-    logging.log(level=logging.WARNING, msg="Check USB connection and UPS.")
-    logging.log(
+    LOGGER.log(level=logging.WARNING, msg="Pwrstatd did not return any data.")
+    LOGGER.log(level=logging.WARNING, msg="Check USB connection and UPS.")
+    LOGGER.log(
         level=logging.WARNING,
         msg="If USB device frequently changes name, consider creating a udev rule.",
     )
@@ -185,5 +198,6 @@ def get_status() -> Optional[Dict[str, str]]:
 
 
 if __name__ == "__main__":
-    logging.log(level=logging.INFO, msg="Starting Pwrstat_API...")
+    LOGGER.setLevel("DEBUG")
+    LOGGER.log(level=logging.INFO, msg="Starting Pwrstat_API...")
     Pwrstat()
