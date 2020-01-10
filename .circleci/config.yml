@@ -83,7 +83,6 @@ jobs:
     working_directory: ~/repo
     steps:
       - checkout
-      - setup_remote_docker
       - run:
           name: json_lint
           command: |
@@ -104,6 +103,7 @@ jobs:
       - image: docker:latest
     steps:
       - checkout
+      - setup_remote_docker
       # build and push Docker image
       - run: |
           TAG=<< pipeline.git.branch >>_CI
