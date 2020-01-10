@@ -2,13 +2,13 @@
 """Get output from pwrstat program and send results to REST or MQTT clients."""
 import asyncio
 import json
+import logging
 from subprocess import Popen, PIPE
 from typing import Any, Dict, List, Optional
 
 import paho.mqtt.client as mqtt
 import voluptuous as vol
-from flask import Flask, Response
-from flask_jsonpify import jsonify
+from flask import Flask, Response, make_response, jsonify
 from ruamel.yaml import YAML as yaml
 from ruamel.yaml import YAMLError
 
@@ -21,10 +21,17 @@ VALID_IP_REGEX = (
 )
 
 
-@APP.route("/pwrstat")
+@APP.route("/pwrstat", methods=["GET"])
 def pwrstat() -> Response:
     """Responder for get requests."""
     return jsonify(get_status())
+
+
+@APP.route("/health", methods=["GET"])
+def health() -> Response:
+    """Responder for get requests."""
+    data = {"message": "OK", "code": "SUCCESS"}
+    return make_response(jsonify(data), 200)
 
 
 class PwrstatMqtt:
@@ -49,39 +56,40 @@ class PwrstatMqtt:
 
         mqtt_host: str = self.mqtt_config["broker"]
         mqtt_port: int = self.mqtt_config["port"]
+        logging.log(level=logging.INFO, msg="Connecting to MQTT broker...")
         self.client.connect(host=mqtt_host, port=mqtt_port)
         self.refresh_interval: int = self.mqtt_config["refresh"]
 
     async def loop(self) -> None:
         """Loop for MQTT updates."""
+        logging.log(level=logging.INFO, msg="Starting MQTT loop...")
         while True:
             await self.publish_update()
+            logging.log(level=logging.DEBUG, msg="Publishing message to MQTT broker...")
             await asyncio.sleep(self.refresh_interval)
 
     async def publish_update(self) -> bool:
         """Update MQTT topic with latest status."""
         topic = self.mqtt_config["topic"]
-        status = get_status()
-        json_payload = json.dumps(status)
         qos: int = self.mqtt_config["qos"]
         retain: bool = self.mqtt_config["retained"]
-        result = self.client.publish(topic, json_payload, qos=qos, retain=retain)
-        return result.is_published()
+        json_payload = json.dumps(get_status())
+        if json_payload is not None and len(json_payload) > 0:
+            result = self.client.publish(topic, json_payload, qos=qos, retain=retain)
+            return result.is_published()
+        return False
 
 
 class Pwrstat:
     """Get output from pwrstat program and send results to REST or MQTT clients."""
 
     def __init__(self, *args, **kwargs) -> None:
-        """Initilize Pwrstat class.
-
-        Returns: None
-        """
+        """Initilize Pwrstat class."""
         with open("pwrstat.yaml") as file:
             try:
                 yaml_config = YAML.load(file)
             except YAMLError as ex:
-                print(ex)
+                logging.log(level=logging.ERROR, msg=ex)
 
         self.mqtt_config: Optional[Dict[str, Any]] = yaml_config[
             "mqtt"
@@ -114,11 +122,13 @@ class Pwrstat:
         )
 
         if self.mqtt_config is not None:
+            logging.log(level=logging.INFO, msg="Initializing MQTT...")
             mqtt_schema(self.mqtt_config)
             pwrstatmqtt = PwrstatMqtt(mqtt_config=self.mqtt_config)
             asyncio.run(pwrstatmqtt.loop())
 
         if self.rest_config is not None:
+            logging.log(level=logging.INFO, msg="Initializing REST...")
             rest_schema(self.rest_config)
             port = self.rest_config["port"]
             host = self.rest_config["bind_address"]
@@ -127,6 +137,7 @@ class Pwrstat:
 
 def get_status() -> Dict[str, str]:
     """Return status from pwrstat program."""
+    logging.log(level=logging.DEBUG, msg="Getting status from pwrstatd...")
     status: str = Popen(["pwrstat", "-status"], stdout=PIPE).communicate()[0].decode(
         "utf-8"
     )
@@ -142,4 +153,5 @@ def get_status() -> Dict[str, str]:
 
 
 if __name__ == "__main__":
+    logging.log(level=logging.INFO, msg="Starting Pwrstat_API...")
     Pwrstat()

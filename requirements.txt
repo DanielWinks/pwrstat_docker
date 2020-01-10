@@ -1,5 +1,4 @@
 flask
-flask-jsonpify
 
 paho-mqtt
 ruamel.yaml
