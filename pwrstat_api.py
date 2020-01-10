@@ -8,8 +8,8 @@ from typing import Any, Dict, List, Optional
 from ruamel.yaml import YAML as yaml
 from ruamel.yaml import YAMLError
 
-from pwrstat_mqtt import PwrstatMqtt
-from pwrstat_rest import APP
+import pwrstat_mqtt
+import pwrstat_rest
 from pwrstat_schemas import PWRSTAT_API_SCHEMA, MQTT_SCHEMA, REST_SCHEMA
 
 LOGGER = logging.getLogger(__name__)
@@ -88,7 +88,7 @@ def _start_mqtt(mqtt_config_yaml: Dict[str, Any]) -> None:
     """Start MQTT client."""
     mqtt_config: Dict[str, Any] = MQTT_SCHEMA(mqtt_config_yaml)
     LOGGER.log(level=logging.INFO, msg="Initializing MQTT...")
-    pwrstatmqtt = PwrstatMqtt(mqtt_config=mqtt_config)
+    pwrstatmqtt =  pwrstat_mqtt.PwrstatMqtt(mqtt_config=mqtt_config)
     asyncio.run(pwrstatmqtt.loop())
 
 
@@ -102,7 +102,7 @@ def _start_rest(rest_config_yaml: Dict[str, Any]) -> None:
         level=logging.INFO,
         msg=f"Starting REST endpoint, listening on {host}:{port}...",
     )
-    APP.run(port=port, host=host)
+    pwrstat_rest.APP.run(port=port, host=host)
 
 
 if __name__ == "__main__":
