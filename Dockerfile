@@ -2,7 +2,7 @@ FROM python:3.8-slim
 LABEL Description="CyberPower PowerPanel"
 LABEL Maintainer="Daniel Winks"
 
-COPY pwrstat_api.py requirements.txt powerpanel_*_amd64.deb init.sh pwrstat.yaml /
+COPY *.py requirements.txt powerpanel_*_amd64.deb init.sh pwrstat.yaml /
 
 RUN apt-get update && apt-get dist-upgrade -y && \
     apt-get install -y procps && \
