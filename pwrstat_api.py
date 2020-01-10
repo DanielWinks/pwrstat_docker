@@ -38,11 +38,26 @@ def health() -> Response:
     return make_response(jsonify(data), 200)
 
 
+@APP.route("/mqtthealth", methods=["GET"])
+def mqtthealth() -> Response:
+    """Responder for get requests."""
+    mqtt_status = PwrstatMqtt().client.is_connected()
+    if mqtt_status:
+        data = {"message": "OK", "code": "SUCCESS"}
+        return make_response(jsonify(data), 200)
+    data = {"message": "MQTT Disconnected!", "code": "ERROR"}
+    return make_response(jsonify(data), 503)
+
+
 class PwrstatMqtt:
     """Create MQTT publisher."""
 
+    __single_state: Dict[Any, Any] = {}
+
     def __init__(self, *args, **kwargs) -> None:
         """Start MQTT loop."""
+        self.__dict__ = self.__single_state
+
         self.mqtt_config: Dict[str, Any] = kwargs["mqtt_config"]
         client_id: str = self.mqtt_config["client_id"]
         self.client = mqtt.Client(
@@ -137,6 +152,10 @@ class Pwrstat:
             rest_schema(self.rest_config)
             port = self.rest_config["port"]
             host = self.rest_config["bind_address"]
+            logging.log(
+                level=logging.INFO,
+                msg=f"Starting REST endpoint, listening on {host}:{port}...",
+            )
             APP.run(port=port, host=host)
 
 
