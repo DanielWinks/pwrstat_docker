@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Get output from pwrstat program and send results to REST or MQTT clients."""
+import asyncio
 import json
 from subprocess import Popen, PIPE
-from asyncio import sleep as async_sleep
 from typing import Any, Dict, List, Optional
 
 import paho.mqtt.client as mqtt
@@ -52,15 +52,11 @@ class PwrstatMqtt:
         self.client.connect(host=mqtt_host, port=mqtt_port)
         self.refresh_interval: int = self.mqtt_config["refresh"]
 
-    def run(self) -> None:
-        """Run async loop."""
-        self.loop()
-
     async def loop(self) -> None:
         """Loop for MQTT updates."""
         while True:
             await self.publish_update()
-            await async_sleep(self.refresh_interval)
+            await asyncio.sleep(self.refresh_interval)
 
     async def publish_update(self) -> bool:
         """Update MQTT topic with latest status."""
@@ -120,7 +116,7 @@ class Pwrstat:
         if self.mqtt_config is not None:
             mqtt_schema(self.mqtt_config)
             pwrstatmqtt = PwrstatMqtt(mqtt_config=self.mqtt_config)
-            pwrstatmqtt.run()
+            asyncio.run(pwrstatmqtt.loop())
 
         if self.rest_config is not None:
             rest_schema(self.rest_config)
