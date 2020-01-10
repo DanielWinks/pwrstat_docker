@@ -97,7 +97,19 @@ jobs:
             if [ "${FAILED}" = "1" ]; then
               exit 1
             fi
-
+  build:
+    docker:
+      - image: docker:latest
+    steps:
+      - setup_remote_docker:
+          docker_layer_caching: true
+      # build and push Docker image
+      - run: |
+          TAG=<< pipeline.git.branch >>_CI
+          echo ${TAG}
+          docker build -t ${DOCKER_REPO}:${TAG} .
+          echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin
+          docker push ${DOCKER_REPO}:${TAG}
 workflows:
   version: 2
   lint_and_test:
@@ -106,3 +118,4 @@ workflows:
       - lint_yaml
       - lint_md
       - lint_json
+      - build

@@ -1,10 +1,4 @@
 {
-    "emeraldwalk.runonsave": {
-        "commands": [{
-            "match": "\\.py$",
-            "cmd": "black --line-length=110 ${file}"
-        }]
-    },
     "python.linting.pylintEnabled": true,
     "python.linting.pylintArgs": ["--rcfile=pylintrc"],
     "python.linting.flake8Enabled": true,
@@ -12,7 +6,6 @@
     "python.linting.mypyEnabled": true,
     "python.linting.pydocstyleEnabled": true,
     "python.linting.pycodestyleEnabled": true,
-    "git.postCommitCommand": "sync",
     "python.formatting.provider": "black",
     "python.jediEnabled": false
 }
