@@ -98,12 +98,11 @@ jobs:
               exit 1
             fi
   build:
+    working_directory: ~/repo
     docker:
       - image: docker:latest
     steps:
       - checkout
-      - setup_remote_docker:
-          docker_layer_caching: true
       # build and push Docker image
       - run: |
           TAG=<< pipeline.git.branch >>_CI
