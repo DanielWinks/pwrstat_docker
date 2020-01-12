@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Get output from pwrstat program and send results to REST or MQTT clients."""
 from flask import Flask, Response, make_response, jsonify
 

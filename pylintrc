@@ -52,7 +52,10 @@ reports=no
 ignored-classes=_CountingAttr
 
 [FORMAT]
-max-line-length=110
+max-line-length=88
 
 [EXCEPTIONS]
 overgeneral-exceptions=Exception,HomeAssistantError
+
+[LOGGING]
+logging-format-style=fstr
