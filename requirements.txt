@@ -1,8 +1,5 @@
 flask
-flask_restful
-flask-jsonpify
 
 paho-mqtt
 ruamel.yaml
-schedule
 voluptuous

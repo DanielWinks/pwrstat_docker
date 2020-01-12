@@ -3,7 +3,7 @@ version: 2.1
 executors:
   python_executor:
     docker:
-      - image: circleci/python:3.7.4
+      - image: circleci/python:3.8
   yaml_executor:
     docker:
       - image: sdesbure/yamllint
@@ -97,7 +97,20 @@ jobs:
             if [ "${FAILED}" = "1" ]; then
               exit 1
             fi
-
+  build:
+    working_directory: ~/repo
+    docker:
+      - image: docker:latest
+    steps:
+      - checkout
+      - setup_remote_docker
+      # build and push Docker image
+      - run: |
+          TAG=<< pipeline.git.branch >>_CI
+          cd ~/repo
+          docker build -t ${DOCKER_REPO}:${TAG} .
+          echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin
+          docker push ${DOCKER_REPO}:${TAG}
 workflows:
   version: 2
   lint_and_test:
@@ -106,3 +119,4 @@ workflows:
       - lint_yaml
       - lint_md
       - lint_json
+      - build
