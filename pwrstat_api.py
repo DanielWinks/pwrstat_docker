@@ -12,7 +12,7 @@ import pwrstat_mqtt
 import pwrstat_rest
 from pwrstat_schemas import PWRSTAT_API_SCHEMA, MQTT_SCHEMA, REST_SCHEMA
 
-LOGGER = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 YAML = yaml(typ="safe")
 
 
@@ -31,7 +31,7 @@ def process_config() -> None:
         try:
             yaml_config = YAML.load(file)
         except YAMLError as ex:
-            LOGGER.log(level=logging.ERROR, msg=ex)
+            _LOGGER.log(level=logging.ERROR, msg=ex)
 
     if "mqtt" in yaml_config:
         _start_mqtt(yaml_config["mqtt"])
@@ -42,12 +42,13 @@ def process_config() -> None:
     pwrstat_api_yaml: Dict[str, Any] = yaml_config.get("pwrstat_api") or {}
     pwrstat_api_config: Dict[str, Any] = PWRSTAT_API_SCHEMA(pwrstat_api_yaml)
     log_level = pwrstat_api_config["log_level"]
-    LOGGER.setLevel(log_level)
+    print(log_level)
+    _LOGGER.setLevel(log_level)
 
 
 def get_status() -> Optional[Dict[str, str]]:
     """Return status from pwrstat program."""
-    LOGGER.log(level=logging.DEBUG, msg="Getting status from pwrstatd...")
+    _LOGGER.log(level=logging.DEBUG, msg="Getting status from pwrstatd...")
     status: str = Popen(
         ["pwrstat", "-status"], stdout=PIPE, stderr=DEVNULL
     ).communicate()[0].decode("utf-8")
@@ -61,9 +62,9 @@ def get_status() -> Optional[Dict[str, str]]:
             status_list.append(lines)
     if len(status_list) > 1:
         return {k[0]: k[1] for k in status_list}
-    LOGGER.log(level=logging.WARNING, msg="Pwrstatd did not return any data.")
-    LOGGER.log(level=logging.WARNING, msg="Check USB connection and UPS.")
-    LOGGER.log(
+    _LOGGER.log(level=logging.WARNING, msg="Pwrstatd did not return any data.")
+    _LOGGER.log(level=logging.WARNING, msg="Check USB connection and UPS.")
+    _LOGGER.log(
         level=logging.WARNING,
         msg="If USB device frequently changes name, consider creating a udev rule.",
     )
@@ -87,18 +88,18 @@ async def _pwrstatd_watchdog() -> None:
 def _start_mqtt(mqtt_config_yaml: Dict[str, Any]) -> None:
     """Start MQTT client."""
     mqtt_config: Dict[str, Any] = MQTT_SCHEMA(mqtt_config_yaml)
-    LOGGER.log(level=logging.INFO, msg="Initializing MQTT...")
-    pwrstatmqtt =  pwrstat_mqtt.PwrstatMqtt(mqtt_config=mqtt_config)
+    _LOGGER.log(level=logging.INFO, msg="Initializing MQTT...")
+    pwrstatmqtt = pwrstat_mqtt.PwrstatMqtt(mqtt_config=mqtt_config)
     asyncio.run(pwrstatmqtt.loop())
 
 
 def _start_rest(rest_config_yaml: Dict[str, Any]) -> None:
     """Start REST client."""
-    LOGGER.log(level=logging.INFO, msg="Initializing REST...")
+    _LOGGER.log(level=logging.INFO, msg="Initializing REST...")
     rest_config: Dict[str, Any] = REST_SCHEMA(rest_config_yaml)
     port = rest_config["port"]
     host = rest_config["bind_address"]
-    LOGGER.log(
+    _LOGGER.log(
         level=logging.INFO,
         msg=f"Starting REST endpoint, listening on {host}:{port}...",
     )
@@ -106,6 +107,6 @@ def _start_rest(rest_config_yaml: Dict[str, Any]) -> None:
 
 
 if __name__ == "__main__":
-    LOGGER.setLevel("DEBUG")
-    LOGGER.log(level=logging.INFO, msg="Starting Pwrstat_API...")
+    _LOGGER.setLevel("DEBUG")
+    _LOGGER.log(level=logging.INFO, msg="Starting Pwrstat_API...")
     PwrstatApi()
