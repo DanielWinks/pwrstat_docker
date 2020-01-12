@@ -1,3 +1,4 @@
+#!/usr/bin/python3.8
 """Get output from pwrstat program and send results to REST or MQTT clients."""
 from threading import Thread
 import time
