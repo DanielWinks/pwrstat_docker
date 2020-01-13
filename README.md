@@ -6,8 +6,10 @@ This is a container for the CyberPower 'pwrstat' utility.
 Basic GET support for a single JSON object response for
 all parameters of the UPS are implemented.
 MQTT is also supported, with broker, port, client_id and topic
-options all being specified in the config file. Note: client_id
-must be unique.
+options all being specified in the config file. 
+Optionally, username/password may be specified. 
+TLS support soon.
+Note: client_id must be unique.
 
 ## Usage
 
@@ -42,6 +44,8 @@ must be unique.
 
 ```yaml
     ---
+    pwrstat_api: # optional
+        log_level: WARNING # optional, may be 'DEBUG', 'WARNING', 'INFO', 'CRITICAL'
     mqtt:
         broker: "192.168.1.100"
         port: 1883
@@ -50,7 +54,9 @@ must be unique.
         refresh: 3
         qos: 0
         retained: true
+        # username: "my_username" # optional
+        # password: "my_password" # optional, required if username specified
     rest:
-        port: 5003
+        port: 5002
         bind_address: "0.0.0.0"
 ```
