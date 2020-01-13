@@ -13,7 +13,7 @@ Note: client_id must be unique.
 
 ## Usage
 
-Available healthchecks: 
+Available healthchecks:
 1) `http://server:port/health` <- `200 'OK'` if REST client functional
 1) `http://server:port/mqtthealth` <- `200 'OK'` if MQTT client is connected to broker
 
