@@ -42,8 +42,7 @@ def _process_config() -> None:
     if "mqtt" in yaml_config:
         _start_mqtt(yaml_config["mqtt"])
 
-    if "rest" in yaml_config:
-        _start_rest(yaml_config["rest"])
+    _start_rest(yaml_config["rest"])
 
 
 def get_status() -> Optional[Dict[str, str]]:
