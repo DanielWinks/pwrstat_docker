@@ -83,13 +83,13 @@ def _start_pwrstatd_watchdog() -> None:
     """Start pwrstatd and ensure it's running."""
     pwrstatd_process = _start_pwrstatd()
 
-    def watchdog():
-        while True:
-            time.sleep(30)
-            if pwrstatd_process.poll() is None:
-                _start_pwrstatd()
+    # def watchdog():
+    #     while True:
+    #         time.sleep(30)
+    #         if pwrstatd_process.poll() is None:
+    #             _start_pwrstatd()
 
-    Thread(target=watchdog).start()
+    # Thread(target=watchdog).start()
 
 
 def _start_mqtt(mqtt_config_yaml: Dict[str, Any]) -> None:
