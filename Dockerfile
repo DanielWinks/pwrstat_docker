@@ -6,6 +6,7 @@ COPY *.py requirements.txt PPL-1.3.3-64bit.deb init.sh pwrstat.yaml /
 
 RUN apt-get update && apt-get dist-upgrade -y && \
     apt-get install -y procps && \
+    apt-get install -y curl && \
     chmod +x /init.sh && chmod +x /pwrstat_api.py && \
     pip install --trusted-host pypi.python.org -r requirements.txt && \
     apt-get install -y /PPL-1.3.3-64bit.deb && \
