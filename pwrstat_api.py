@@ -1,7 +1,6 @@
 #!/usr/local/bin/python3
 """Get output from pwrstat program and send results to REST or MQTT clients."""
 from threading import Thread
-import time
 import logging
 from subprocess import DEVNULL, Popen, PIPE
 from typing import Any, Dict, List, Optional
@@ -9,9 +8,10 @@ from typing import Any, Dict, List, Optional
 from ruamel.yaml import YAML as yaml
 from ruamel.yaml import YAMLError
 
+import pwrstat_prometheus
 import pwrstat_mqtt
 import pwrstat_rest
-from pwrstat_schemas import PWRSTAT_API_SCHEMA, MQTT_SCHEMA, REST_SCHEMA
+from pwrstat_schemas import PWRSTAT_API_SCHEMA, MQTT_SCHEMA, REST_SCHEMA, PROMETHEUS_SCHEMA
 
 _LOGGER = logging.getLogger("PwrstatApi")
 YAML = yaml(typ="safe")
@@ -21,7 +21,7 @@ class PwrstatApi:
     """Get output from pwrstat program and send results to REST or MQTT clients."""
 
     def __init__(self) -> None:
-        """Initilize Pwrstat class."""
+        """Initialize Pwrstat class."""
         _start_pwrstatd_watchdog()
         _process_config()
 
@@ -41,6 +41,9 @@ def _process_config() -> None:
 
     if "mqtt" in yaml_config:
         _start_mqtt(yaml_config["mqtt"])
+
+    if "prometheus" in yaml_config:
+        _start_prometheus(yaml_config["prometheus"])
 
     if "rest" in yaml_config:
         _start_rest(yaml_config["rest"])
@@ -98,6 +101,24 @@ def _start_mqtt(mqtt_config_yaml: Dict[str, Any]) -> None:
     _LOGGER.info("Initializing MQTT...")
     pwrstatmqtt = pwrstat_mqtt.PwrstatMqtt(mqtt_config=mqtt_config)
     Thread(target=pwrstatmqtt.loop).start()
+
+
+def _start_prometheus(prometheus_config_yaml: Dict[str, Any]) -> None:
+    """Start Prometheus client."""
+    _LOGGER.info("Initializing Prometheus...")
+    prometheus_config: Dict[str, Any] = PROMETHEUS_SCHEMA(prometheus_config_yaml)
+
+    from prometheus_client.core import CollectorRegistry
+    from prometheus_client import make_wsgi_app
+    from wsgiref.simple_server import make_server
+
+    registry = CollectorRegistry(auto_describe=True)
+    registry.register(pwrstat_prometheus.CustomCollector(prometheus_config["labels"]))
+
+    app = make_wsgi_app(registry)
+    httpd = make_server(prometheus_config["bind_address"], prometheus_config["port"], app)
+    Thread(target=httpd.serve_forever).start()
+    _LOGGER.info("After Prometheus")
 
 
 def _start_rest(rest_config_yaml: Dict[str, Any]) -> None:

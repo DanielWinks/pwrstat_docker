@@ -33,3 +33,17 @@ REST_SCHEMA = vol.Schema(
         ),
     }
 )
+
+PROMETHEUS_SCHEMA = vol.Schema(
+    {
+        vol.Optional("port", default=5002): vol.All(
+            int, vol.Range(min=1025, max=65535)
+        ),
+        vol.Optional("bind_address", default="0.0.0.0"): vol.All(
+            str, vol.Length(min=7, max=15), vol.Match(VALID_IP_REGEX)
+        ),
+        vol.Optional("labels", default={}): vol.All(
+            dict
+        ),
+    }
+)
