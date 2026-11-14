@@ -1,4 +1,4 @@
-FROM python:3.8-slim
+FROM python:3.15-slim
 LABEL Description="CyberPower PowerPanel"
 LABEL Maintainer="Daniel Winks"
 
